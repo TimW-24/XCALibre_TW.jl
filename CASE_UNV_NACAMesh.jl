@@ -1,5 +1,5 @@
-using Plots, FVM_1D, AerofoilOptimisation, LinearAlgebra
-using BayesianOptimization, GaussianProcesses, Distributions
+using Plots, XCALibre, AerofoilOptimisation, LinearAlgebra
+using BayesianOptimization
 
 #%% REYNOLDS & Y+ CALCULATIONS
 
@@ -38,8 +38,7 @@ chord = 250.0
     GUI = false #SALOME GUI selector
 )=#
 mesh_file = "unv_sample_meshes/NACAMesh.unv"
-mesh = build_mesh(mesh_file, scale=0.001)
-mesh = update_mesh_format(mesh)
+mesh = UNV2D_mesh(mesh_file, scale=0.001)
 
 # Velocity calculation for given α
 function vel_calc(Re,α,nu,chord)
@@ -66,38 +65,38 @@ end
 
     model = Physics(
         time = Steady(),
-        fluid = Incompressible(nu = ConstantScalar(nu)),
+        fluid = Fluid{Incompressible}(nu = nu),
         turbulence = RANS{KOmega}(β⁺=0.09),
-        energy = nothing,
+        energy = Energy{Isothermal}(),
         domain = mesh
         )
 
     @assign! model momentum U ( 
-        FVM_1D.Dirichlet(:inlet, velocity),
+        Dirichlet(:inlet, velocity),
         Neumann(:outlet, 0.0),
-        FVM_1D.Dirichlet(:top, velocity),
-        FVM_1D.Dirichlet(:bottom, velocity),
-        FVM_1D.Dirichlet(:foil, noSlip)
+        Dirichlet(:top, velocity),
+        Dirichlet(:bottom, velocity),
+        Dirichlet(:foil, noSlip)
     )
 
     @assign! model momentum p (
         Neumann(:inlet, 0.0),
-        FVM_1D.Dirichlet(:outlet, 0.0),
+        Dirichlet(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
         Neumann(:foil, 0.0)
     )
 
     @assign! model turbulence k (
-        FVM_1D.Dirichlet(:inlet, k_inlet),
+        Dirichlet(:inlet, k_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
-        FVM_1D.Dirichlet(:foil, 1e-15)
+        Dirichlet(:foil, 1e-15)
     )
 
     @assign! model turbulence omega (
-        FVM_1D.Dirichlet(:inlet, ω_inlet),
+        Dirichlet(:inlet, ω_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
@@ -105,11 +104,11 @@ end
     )
 
     @assign! model turbulence nut (
-        FVM_1D.Dirichlet(:inlet, k_inlet/ω_inlet),
+        Dirichlet(:inlet, k_inlet/ω_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0), 
-        FVM_1D.Dirichlet(:foil, 0.0)
+        Dirichlet(:foil, 0.0)
     )
 
 
@@ -166,7 +165,7 @@ end
     initialise!(model.turbulence.omega, ω_inlet)
     initialise!(model.turbulence.nut, k_inlet/ω_inlet)
 
-    Rx, Ry, Rp, model2 = run!(model, config) #, pref=0.0)
+    Rx, Ry, Rp, model_out = run!(model, config) #, pref=0.0)
 
     #%% POST-PROCESSING
     let

@@ -1,4 +1,4 @@
-using Plots, FVM_1D, Krylov, AerofoilOptimisation
+using Plots, XCALibre, Krylov, AerofoilOptimisation
 using BayesianOptimization, GaussianProcesses, Distributions
 
 function foil_optim(y::Vector{Float64})

@@ -66,7 +66,7 @@ end
     model = Physics(
         time = Steady(),
         fluid = Fluid{Incompressible}(nu = nu),
-        turbulence = RANS{KOmega}(),
+        turbulence = RANS{KOmega}(β⁺=0.09),
         energy = Energy{Isothermal}(),
         domain = mesh
         )

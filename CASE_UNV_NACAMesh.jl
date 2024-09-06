@@ -19,7 +19,7 @@ for i ∈ 1:iter
 =#
 # Aerofoil Mesh
 chord = 250.0
-
+#=
 create_NACA_mesh(
     chord = chord, #[mm]
     α = 0, #[°]
@@ -36,7 +36,7 @@ create_NACA_mesh(
     unv_path = "/home/tim/Documents/MEng Individual Project/Julia/XCALibre_TW.jl/unv_sample_meshes/NACAMesh.unv", #Path to .unv destination
     note_path = "/home/tim/Documents/MEng Individual Project/SALOME", #Path to SALOME notebook (.hdf) destination
     GUI = false #SALOME GUI selector
-)
+) =#
 mesh_file = "unv_sample_meshes/NACAMesh.unv"
 mesh = UNV2D_mesh(mesh_file, scale=0.001)
 
@@ -52,7 +52,7 @@ end
 #    println(α)
     # Parameters
     Re = 1000000
-    α = 2
+    α = 0
     nu,ρ = 1.48e-5,1.225
     velocity = vel_calc(Re,α,nu,chord)
     νR = 10
@@ -125,8 +125,8 @@ end
             solver      = BicgstabSolver, # BicgstabSolver, GmresSolver
             preconditioner = Jacobi(),
             convergence = 1e-7,
-            relax       = 0.5,
-            rtol = 1e-2,
+            relax       = 0.7,
+            rtol = 1e-3,
             atol = 1e-10
         ),
         p = set_solver(
@@ -135,7 +135,7 @@ end
             preconditioner = Jacobi(),
             convergence = 1e-7,
             relax       = 0.3,
-            rtol = 1e-3,
+            rtol = 1e-4,
             atol = 1e-10
         ),
         k = set_solver(
@@ -143,8 +143,8 @@ end
             solver      = BicgstabSolver, # BicgstabSolver, GmresSolver
             preconditioner = Jacobi(),
             convergence = 1e-7,
-            relax       = 0.4,
-            rtol = 1e-2,
+            relax       = 0.3,
+            rtol = 1e-3,
             atol = 1e-10
         ),
         omega = set_solver(
@@ -152,8 +152,8 @@ end
             solver      = BicgstabSolver, # BicgstabSolver, GmresSolver
             preconditioner = Jacobi(),
             convergence = 1e-7,
-            relax       = 0.4,
-            rtol = 1e-2,
+            relax       = 0.3,
+            rtol = 1e-3,
             atol = 1e-10
         )
     )

@@ -1,5 +1,5 @@
 using Plots, XCALibre, AerofoilOptimisation, LinearAlgebra
-using BayesianOptimization
+using BayesianOptimization, GaussianProcesses, Distributions
 
 #%% REYNOLDS & Y+ CALCULATIONS
 
@@ -48,11 +48,11 @@ function vel_calc(Re,α,nu,chord)
     vel[2] = Umag*sin(α[1]*π/180)
     return vel
 end
-#function foil_optim(α::Vector{Float64})
-#    println(α)
+function foil_optim(α::Vector{Float64})
+    println(α)
     # Parameters
     Re = 1000000
-    α = 0
+    α = α
     nu,ρ = 1.48e-5,1.225
     velocity = vel_calc(Re,α,nu,chord)
     νR = 10
@@ -72,31 +72,31 @@ end
         )
 
     @assign! model momentum U ( 
-        Dirichlet(:inlet, velocity),
+        XCALibre.Dirichlet(:inlet, velocity),
         Neumann(:outlet, 0.0),
-        Dirichlet(:top, velocity),
-        Dirichlet(:bottom, velocity),
-        Dirichlet(:foil, noSlip)
+        XCALibre.Dirichlet(:top, velocity),
+        XCALibre.Dirichlet(:bottom, velocity),
+        XCALibre.Dirichlet(:foil, noSlip)
     )
 
     @assign! model momentum p (
         Neumann(:inlet, 0.0),
-        Dirichlet(:outlet, 0.0),
+        XCALibre.Dirichlet(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
         Neumann(:foil, 0.0)
     )
 
     @assign! model turbulence k (
-        Dirichlet(:inlet, k_inlet),
+        XCALibre.Dirichlet(:inlet, k_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
-        Dirichlet(:foil, 1e-15)
+        XCALibre.Dirichlet(:foil, 1e-15)
     )
 
     @assign! model turbulence omega (
-        Dirichlet(:inlet, ω_inlet),
+        XCALibre.Dirichlet(:inlet, ω_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0),
@@ -104,11 +104,11 @@ end
     )
 
     @assign! model turbulence nut (
-        Dirichlet(:inlet, k_inlet/ω_inlet),
+        XCALibre.Dirichlet(:inlet, k_inlet/ω_inlet),
         Neumann(:outlet, 0.0),
         Neumann(:top, 0.0),
         Neumann(:bottom, 0.0), 
-        Dirichlet(:foil, 0.0)
+        XCALibre.Dirichlet(:foil, 0.0)
     )
 
 
@@ -158,9 +158,9 @@ end
         )
     )
 
-    runtime = set_runtime(iterations=1000, write_interval=1000, time_step=1)
+    runtime = set_runtime(iterations=500, write_interval=500, time_step=1)
 
-    hardware = set_hardware(backend=CPU(), workgroup=8)
+    hardware = set_hardware(backend=CPU(), workgroup=6)
 
     config = Configuration(
         solvers=solvers, schemes=schemes, runtime=runtime, hardware=hardware)
@@ -173,7 +173,7 @@ end
     initialise!(model.turbulence.omega, ω_inlet)
     initialise!(model.turbulence.nut, k_inlet/ω_inlet)
 
-    Rx, Ry, Rp, model_out = run!(model, config) #, pref=0.0)
+    Rx, Ry, Rz, Rp, model_out = run!(model, config) #, pref=0.0)
 
     #%% POST-PROCESSING
     let
@@ -183,8 +183,8 @@ end
         plot!(1:length(Rp), Rp, yscale=:log10, label="p")
     end
 
-    C_l,C_d = aero_coeffs(:foil, chord, ρ, velocity, model.momentum.p)
-    aero_eff = lift_to_drag(:foil, ρ, model)
+    C_l,C_d = aero_coeffs(:foil, chord, velocity, model, ρ, nu)
+    aero_eff = lift_to_drag(:foil, model, ρ, nu)
 
     if isnan(aero_eff)
         aero_eff = 0
@@ -193,11 +193,11 @@ end
     vtk_files = filter(x->endswith(x,".vtk"), readdir("vtk_results/"))
     for file ∈ vtk_files
         filepath = "vtk_results/"*file
-        dest = "vtk_loop/NACA_Optimisation/$(aero_eff),$(α)"*file
+        dest = "vtk_loop/NACA_Optimisation/$(round(aero_eff;digits=3)),$(round(α;digits=3))"*file
         mv(filepath, dest,force=true)
     end
-#    return aero_eff
-#end
+    return aero_eff
+end
 model = ElasticGPE(1,                            # 2 input dimensions
                    mean = MeanConst(0.0),         
                    kernel = SEArd([0.0], 5.0),

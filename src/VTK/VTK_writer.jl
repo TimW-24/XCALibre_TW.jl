@@ -13,7 +13,7 @@ function write_vtk(name, mesh, meshData::VTKWriter2D, args...) #, Ux, Uy, Uz, p)
     # FVM.interpolate2nodes!(UzNodes, Uz)
     # FVM.interpolate2nodes!(pNodes, p)
     (; cell_nodes) = mesh
-    filename = name*".vtk"
+    filename = "vtk_results/"*name*".vtk"
     open(filename, "w") do io
         write(io, "# vtk DataFile Version 3.0\n")
         write(io, "XCALibre.jl simulation data\n")

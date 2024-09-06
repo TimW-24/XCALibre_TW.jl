@@ -1,6 +1,32 @@
 export pressure_force, viscous_force
 export stress_tensor, wall_shear_stress
+export lift_to_drag, aero_coeffs
 
+lift_to_drag(patch::Symbol, model, ρ, nu) = begin
+    oldstd = stdout
+    redirect_stdout(devnull)
+    Fp = pressure_force(patch, model.momentum.p, ρ)
+    Fv = viscous_force(patch, model.momentum.U, ρ, nu, model.turbulence.nut)
+    redirect_stdout(oldstd)
+    Ft = Fp + Fv
+    aero_eff = Ft[2]/Ft[1]
+    print("Aerofoil L/D: ",round(aero_eff,sigdigits = 4))
+    return aero_eff
+end
+
+aero_coeffs(patch::Symbol, chord::R where R <: Real, velocity::Vector{Float64}, model, ρ, nu) = begin
+    oldstd = stdout
+    redirect_stdout(devnull)
+    Fp = pressure_force(patch, model.momentum.p, ρ)
+    Fv = viscous_force(patch, model.momentum.U, ρ, nu, model.turbulence.nut)
+    redirect_stdout(oldstd)
+    Ft = Fp + Fv
+    C_l = 2Ft[2]/(ρ*(velocity[1]^2)*chord*0.001)
+    C_d = 2Ft[1]/(ρ*(velocity[1]^2)*chord*0.001)
+    print("Lift Coefficient: ",round(C_l,sigdigits = 4))
+    print("\nDrag Coefficient: ",round(C_d,sigdigits = 4))
+    return C_l,C_d
+end
 
 pressure_force(patch::Symbol, p::ScalarField, rho) = begin
     mesh = p.mesh

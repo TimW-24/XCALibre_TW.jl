@@ -153,7 +153,7 @@ end
 
 
 function write_vtk(name, mesh, meshData::VTKWriter3D, args...)
-    filename=name*".vtu"
+    filename = "vtk_results/"*name*".vtu"
 
     # Define backend and variables
     backend = _get_backend(mesh)

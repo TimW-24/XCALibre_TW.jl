@@ -1,42 +1,8 @@
-using Plots, XCALibre, AerofoilOptimisation, LinearAlgebra
-using BayesianOptimization, GaussianProcesses, Distributions
+using Plots, XCALibre, BayesianOptimization
+using LinearAlgebra, GaussianProcesses, Distributions
 
-#%% REYNOLDS & Y+ CALCULATIONS
-
-#=yplus_init,BL_layers = 2.0,55
-laminar = false
-velocity,BL_mesh = BL_calcs(Re,nu,ρ,chord,yplus_init,BL_layers,laminar) #Returns (BL mesh thickness, BL mesh growth rate)
-
-#%% CFD CASE SETUP & SOLVE
-
-iter = 1
-aero_eff = Array{Float64,1}(undef,iter)
-C_l = Array{Float64,1}(undef,iter)
-C_d = Array{Float64,1}(undef,iter)
-for i ∈ 1:iter
-    α = i-1
-    writes = α > 10 ? 50 : 1000
-=#
-# Aerofoil Mesh
 chord = 250.0
-#=
-create_NACA_mesh(
-    chord = chord, #[mm]
-    α = 0, #[°]
-    cutoff = 0.5*(chord/100), #Min thickness of TE [mm]. Default = 0.5 @ 100mm chord; reduce for aerofoils with very thin TE
-    vol_size = (16,10), #Total fluid volume size (x,y) in chord multiples [aerofoil located in the vertical centre at the 1/3 position horizontally]
-    ratio = 0.75,
-    BL_thick = 1, #Boundary layer mesh thickness [%c]
-    BL_layers = 35, #Boundary layer mesh layers [-]
-    BL_stretch = 1.2, #Boundary layer stretch factor (successive multiplication factor of cell thickness away from wall cell) [-]
-    py_lines = (14,37,44,248,358,391,405,353), #SALOME python script relevant lines (notebook path, chord line, points line, splines line, BL thickness, foil end BL fidelity, .unv path)
-    dat_path = "/home/tim/Documents/MEng Individual Project/Julia/AerofoilOptimisation/foil_dats/NACA0012.dat",
-    py_path = "/home/tim/Documents/MEng Individual Project/Julia/AerofoilOptimisation/foil_pythons/NACAMesh.py", #Path to SALOME python script
-    salome_path = "/home/tim/Downloads/InstallationFiles/SALOME-9.11.0/mesa_salome", #Path to SALOME installation
-    unv_path = "/home/tim/Documents/MEng Individual Project/Julia/XCALibre_TW.jl/unv_sample_meshes/NACAMesh.unv", #Path to .unv destination
-    note_path = "/home/tim/Documents/MEng Individual Project/SALOME", #Path to SALOME notebook (.hdf) destination
-    GUI = false #SALOME GUI selector
-) =#
+
 mesh_file = "unv_sample_meshes/NACAMesh.unv"
 mesh = UNV2D_mesh(mesh_file, scale=0.001)
 
@@ -223,7 +189,9 @@ result = boptimize!(opt)
 
 alpha_inputs = [2.8125 10.3125 14.0625 6.5625 4.6875 12.1875 8.4375 0.9375 1.40625 8.90625 3.4432126486612407 0.0 2.361306954903304 15.0 5.476514715973348 11.26402659402207 7.39241592658447 13.133937006330672 2.7830815990127813 0.422884724292046 9.38721928615226 3.4024415656772113 1.1987256130185693 14.684527104647096 13.535519587314896 6.929927822198579 14.698546513842413 3.4990688331549125 0.0869761499534637 0.7112198842942964 6.338859238458447 7.1651765143230435 5.475010255776448 14.15347629116867 4.544399245216521 5.255120935630782 9.03719296405648 1.807185497127921 2.719939384552249 0.39405408470667214 6.142924905046002 14.324171433543196 4.608655359771077 5.298885247860957 9.613924812184823 7.444739911521388 12.720833156006066 9.889514857297746 8.17079235179106 3.728882092443396 0.7226152801680674 0.4738547802690282 7.825244758100422 9.117285891015088 2.4133035700392496 2.0123057103010584 5.159388324942617 5.65935815598451 4.034283167891717 14.239635603789512 0.25044779686362056 6.492884747695639 6.747496857595797 0.3391480736236435 5.756697367982879 1.0920079522146666 13.032460047664308 14.906616140638016 11.385716373741317 11.154855611851975 10.072838682793048]
 aeroeff_outputs = [124.162, -7.413, -7.434, -12.953, -24.594, -6.669, -9.205, 7.203, 12.417, -8.634, -92.213, -0.015, 40.596, -9.342, -17.59, -6.88, -10.915, -6.825, 110.738, 2.991, -8.142, -102.806, 9.86, -8.646, -6.964, -11.949, -8.686, -80.908, 0.593, 5.229, -13.669, -11.396, -17.599, -7.566, -26.629, -19.068, -8.491, 19.334, 89.392, 2.778, -14.379, -7.898, -25.669, -18.751, -7.939, -10.812, -6.723, -7.713, -9.577, -54.452, 5.321, 3.368, -10.121, -8.407, 44.384, 24.707, -19.795, -16.554, -38.626, -7.727, 1.743, -13.167, -12.423, 2.379, -16.057, 8.711, -6.797, -9.101, -6.832, -6.925, -7.576]
+aeroeff_outputs = reshape(aeroeff_outputs,1,71)
 #=
 paraview_vis(paraview_path = "paraview", #Path to paraview
              vtk_path = "/home/tim/Documents/MEng Individual Project/Julia/FVM_1D_TW/vtk_results/iteration_..vtk") #Path to vtk files
 =#
+scatter(alpha_inputs,abs.(aeroeff_outputs),legend=false)

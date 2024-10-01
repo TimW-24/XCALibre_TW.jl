@@ -12,10 +12,10 @@ create_NACA_mesh(
     BL_layers = 20, #Boundary layer mesh layers [-]
     BL_stretch = 1.2, #Boundary layer stretch factor (successive multiplication factor of cell thickness away from wall cell) [-]
     py_lines = (14,37,44,248,358,391,405,353), #SALOME python script relevant lines (notebook path, chord line, points line, splines line, BL thickness, foil end BL fidelity, .unv path)
-    dat_path = "/home/tim/Documents/MEng Individual Project/Julia/AerofoilOptimisation/foil_dats/NACA0012.dat",
+    dat_path = "/home/tim/Documents/MEng Individual Project/Julia/AerofoilOptimisation/foil_dats/ClarkY.dat",
     py_path = "/home/tim/Documents/MEng Individual Project/Julia/AerofoilOptimisation/foil_pythons/NACAMesh.py", #Path to SALOME python script
     salome_path = "/home/tim/Downloads/InstallationFiles/SALOME-9.11.0/mesa_salome", #Path to SALOME installation
-    unv_path = "/home/tim/Documents/MEng Individual Project/Julia/XCALibre_TW.jl/unv_sample_meshes/NACAMesh.unv", #Path to .unv destination
+    unv_path = "/home/tim/Documents/MEng Individual Project/Julia/XCALibre_TW.jl/unv_sample_meshes/ClarkYMesh.unv", #Path to .unv destination
     note_path = "/home/tim/Documents/MEng Individual Project/SALOME", #Path to SALOME notebook (.hdf) destination
     GUI = true #SALOME GUI selector
 )
